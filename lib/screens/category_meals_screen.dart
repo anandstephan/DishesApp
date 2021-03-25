@@ -1,20 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:mealsapp/models/meal.dart';
 import 'package:mealsapp/widgets/meal_item.dart';
 import '../dummy-data.dart';
 
-class CategoryMealScreen extends StatelessWidget {
+class CategoryMealScreen extends StatefulWidget {
   static const routeName = '/category-meals';
 
   @override
-  Widget build(BuildContext context) {
-    final routeArgs =
-        ModalRoute.of(context).settings.arguments as Map<String, String>;
-    final categoryId = routeArgs['id'];
-    final categoryTitle = routeArgs['title'];
-    final categoryMeals = DUMMY_MEALS.where((meal) {
-      return meal.categories.contains(categoryId);
-    }).toList();
+  _CategoryMealScreenState createState() => _CategoryMealScreenState();
+}
 
+class _CategoryMealScreenState extends State<CategoryMealScreen> {
+  String categoryTitle;
+  List<Meal> displayMeals;
+  bool _loadedInitData = false;
+
+  void _removeMeal(String mealId) {
+    setState(() {
+      displayMeals.removeWhere((meal) => meal.id == mealId);
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    if (!_loadedInitData) {
+      final routeArgs =
+          ModalRoute.of(context).settings.arguments as Map<String, String>;
+      final categoryId = routeArgs['id'];
+      categoryTitle = routeArgs['title'];
+      displayMeals = DUMMY_MEALS.where((meal) {
+        return meal.categories.contains(categoryId);
+      }).toList();
+      _loadedInitData = true;
+    }
+    super.didChangeDependencies();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
           title: Text(categoryTitle),
@@ -22,14 +45,16 @@ class CategoryMealScreen extends StatelessWidget {
         body: ListView.builder(
           itemBuilder: (ctx, index) {
             return MealItem(
-                id: categoryMeals[index].id,
-                title: categoryMeals[index].title,
-                affordability: categoryMeals[index].affordability,
-                complexity: categoryMeals[index].complexity,
-                duration: categoryMeals[index].duration,
-                imageUrl: categoryMeals[index].imageUrl);
+              id: displayMeals[index].id,
+              title: displayMeals[index].title,
+              affordability: displayMeals[index].affordability,
+              complexity: displayMeals[index].complexity,
+              duration: displayMeals[index].duration,
+              imageUrl: displayMeals[index].imageUrl,
+              removeItem: _removeMeal,
+            );
           },
-          itemCount: categoryMeals.length,
+          itemCount: displayMeals.length,
         ));
   }
 }
